@@ -26,7 +26,7 @@ from yapapi.services import Cluster, ServiceState, Service
 
 logger = logging.getLogger(__name__)
 
-WEBSOCKET_CHUNK_LIMIT: Final[int] = 2 ** 22
+WEBSOCKET_CHUNK_LIMIT: Final[int] = 2 ** 16
 DEFAULT_TIMEOUT: Final[float] = 30.0
 DEFAULT_MAX_REQUEST_SIZE: Final[int] = 128 * 1024 ** 2
 
@@ -140,8 +140,7 @@ class HttpProxyService(Service, abc.ABC):
         if request.can_read_body:
             remote_request += await request.read()
 
-        logger.info("Sending request: `%s %s` to %s",
-                    request.method, request.path_qs, self)
+        logger.info("Sending request: `%s %s` to %s", request.method, request.path_qs, self)
         logger.debug("remote_request: %s", remote_request)
 
         ws_session = aiohttp.ClientSession()
@@ -158,12 +157,10 @@ class HttpProxyService(Service, abc.ABC):
                     ]
                 )
 
-            response_parser = _ResponseParser(
-                ws, self._remote_response_timeout)
+            response_parser = _ResponseParser(ws, self._remote_response_timeout)
             try:
                 response = await response_parser.get_response()
-                logger.info("Remote response received. status=%s",
-                            response.status)
+                logger.info("Remote response received. status=%s", response.status)
                 logger.debug(
                     "Remote response: status=%s, headers=%s, body=%s",
                     response.status,
@@ -179,8 +176,7 @@ class HttpProxyService(Service, abc.ABC):
                     str(e),
                     traceback.format_exc(),
                 )
-                response = web.Response(
-                    status=500, text="Error retrieving the remote response.")
+                response = web.Response(status=500, text="Error retrieving the remote response.")
 
         await ws_session.close()
 
@@ -244,11 +240,9 @@ class LocalHttpProxy:
         self._max_request_size = max_request_size
 
     async def _request_handler(self, request: web.Request) -> web.Response:
-        logger.info("Received a local HTTP request: %s %s",
-                    request.method, request.path_qs)
+        logger.info("Received a local HTTP request: %s %s", request.method, request.path_qs)
 
-        instances = [
-            i for i in self._cluster.instances if i.state == ServiceState.running]
+        instances = [i for i in self._cluster.instances if i.state == ServiceState.running]
 
         if not instances:
             logger.error(
@@ -257,8 +251,7 @@ class LocalHttpProxy:
             return web.Response(status=503, text="No service instances available.")
 
         async with self._request_lock:
-            instance: HttpProxyService = instances[self._request_count % len(
-                instances)]
+            instance: HttpProxyService = instances[self._request_count % len(instances)]
             self._request_count += 1
         return await instance.handle_request(request)
 
@@ -269,8 +262,7 @@ class LocalHttpProxy:
         fashion
         """
         runner = web.ServerRunner(
-            _Server(self._request_handler,
-                    client_max_size=self._max_request_size)
+            _Server(self._request_handler, client_max_size=self._max_request_size)
         )  # type: ignore
         await runner.setup()
         site = web.TCPSite(runner, port=self._port)
