@@ -174,6 +174,8 @@ class HttpProxyService(Service, abc.ABC):
                     str(e),
                     traceback.format_exc(),
                 )
+                response = web.Response(
+                    status=500, text="Error retrieving the remote response.")
 
         await ws_session.close()
 
