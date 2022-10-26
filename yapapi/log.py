@@ -57,7 +57,7 @@ if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
-
+import logstash
 from yapapi import __version__ as yapapi_version
 from yapapi import events
 from yapapi.rest.activity import CommandExecutionError
@@ -83,7 +83,7 @@ class _YagnaDatetimeFormatter(logging.Formatter):
         return dt.strftime(f"%Y-%m-%dT%H:%M:%S.{millis}%z")
 
 
-def enable_default_logger(
+def logstash_logger(
     format_: str = "[%(asctime)s %(levelname)s %(name)s] %(message)s",
     log_file: Optional[str] = None,
     debug_activity_api: bool = False,
@@ -92,33 +92,53 @@ def enable_default_logger(
     debug_net_api: bool = False,
 ):
     """Enable the default logger that logs messages to stderr with level `INFO`.
-
     If `log_file` is specified, the logger with output messages with level `DEBUG` to
     the given file.
     """
-    logger = logging.getLogger("yapapi")
-    logger.setLevel(logging.DEBUG)
-    logger.disabled = False
+
+    host = 'logstash'
+
+    test_logger = logging.getLogger('python-logstash-logger')
+    test_logger.setLevel(logging.DEBUG)
+    test_logger.addHandler(logstash.LogstashHandler(host, 5959, version=1))
+    test_logger.disabled = False
+# test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
+
+    test_logger.error('python-logstash: test logstash error message.')
+    test_logger.info('python-logstash: test logstash info message.')
+    test_logger.warning('python-logstash: test logstash warning message.')
+
+# add extra field to logstash message
+    extra = {
+        'test_string': 'python version: ' + repr(sys.version_info),
+        'test_boolean': True,
+        'test_dict': {'a': 1, 'b': 'c'},
+        'test_float': 1.23,
+        'test_integer': 123,
+        'test_list': [1, 2, '3'],
+    }
+    test_logger.info('python-logstash: test extra fields', extra=extra)
 
     formatter = _YagnaDatetimeFormatter(fmt=format_)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.INFO)
-    logger.addHandler(console_handler)
+    test_logger.addHandler(console_handler)
 
     if log_file:
-        file_handler = logging.FileHandler(filename=log_file, mode="w", encoding="utf-8")
+        file_handler = logging.FileHandler(
+            filename=log_file, mode="w", encoding="utf-8")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
+        test_logger.addHandler(file_handler)
 
-        logger.debug(
+        test_logger.debug(
             "Yapapi version: %s, script: %s, working directory: %s",
             yapapi_version,
             sys.argv[0],
             os.getcwd(),
         )
-        logger.info(
+        test_logger.info(
             "Using log file `%s`; in case of errors look for additional information there", log_file
         )
 
@@ -191,7 +211,8 @@ def _check_event_type_to_string():
     )
 
     # get only the leaf event classes (the ones which have no subclasses)
-    concrete_event_types = {ev for ev in event_types if not ev.__subclasses__()}
+    concrete_event_types = {
+        ev for ev in event_types if not ev.__subclasses__()}
 
     assert len(concrete_event_types) > 0  # Sanity check
 
@@ -213,7 +234,8 @@ def log_event(event: events.Event) -> None:
 
     #   Default value because we allow developers to declare their own events
     descr = event_type_to_string.get(type(event), str(type(event)))
-    msg = "; ".join([descr, *(f"{name} = {value}" for name, value in event.__dict__.items())])
+    msg = "; ".join(
+        [descr, *(f"{name} = {value}" for name, value in event.__dict__.items())])
 
     if event.exc_info:
         event_logger.log(loglevel, msg, exc_info=event.exc_info)
@@ -347,7 +369,8 @@ class SummaryLogger:
         """Print a summary at the end of computation."""
 
         num_providers = len(
-            {self.agreement_provider_info[agr_id] for agr_id in self.confirmed_agreements[job_id]}
+            {self.agreement_provider_info[agr_id]
+                for agr_id in self.confirmed_agreements[job_id]}
         )
         self.logger.info(
             "Negotiated %d agreements with %s",
@@ -489,11 +512,13 @@ class SummaryLogger:
                 str_capped(event.task_data, 200),
                 job_id=event.job_id,
             )
-            self.provider_tasks[event.job_id][provider_info].append(event.task_id)
+            self.provider_tasks[event.job_id][provider_info].append(
+                event.task_id)
 
         elif isinstance(event, events.ServiceFinished):
             provider_info = self.agreement_provider_info[event.agr_id]
-            self.provider_services[event.job_id][provider_info].append(event.service.id)
+            self.provider_services[event.job_id][provider_info].append(
+                event.service.id)
 
         elif isinstance(event, events.ScriptSent):
             provider_info = self.agreement_provider_info[event.agr_id]
@@ -531,7 +556,8 @@ class SummaryLogger:
         elif isinstance(event, events.PaymentFailed):
             assert event.exception
             provider_info = self.agreement_provider_info[event.agr_id]
-            reason = str(event.exception) or repr(event.exception) or "unexpected error"
+            reason = str(event.exception) or repr(
+                event.exception) or "unexpected error"
             self.logger.error(
                 "Failed to accept an invoice or a debit note from '%s', reason: %s",
                 provider_info,
@@ -578,7 +604,8 @@ class SummaryLogger:
             job_id = event.job_id
             if not event.exc_info:
                 total_time = time.time() - self.start_time[job_id]
-                self.logger.info(f"Job finished in {total_time:.1f}s", job_id=job_id)
+                self.logger.info(
+                    f"Job finished in {total_time:.1f}s", job_id=job_id)
             else:
                 exc = event.exception
                 if isinstance(exc, CancelledError):
@@ -586,17 +613,21 @@ class SummaryLogger:
                     self.logger.warning("Job cancelled", job_id=job_id)
                 else:
                     reason = str(exc) or repr(exc) or "unexpected error"
-                    self.logger.error("Job failed, reason: %s", reason, job_id=job_id)
+                    self.logger.error("Job failed, reason: %s",
+                                      reason, job_id=job_id)
             self._print_summary(job_id)
 
         elif isinstance(event, events.ShutdownFinished):
             self._print_total_cost()
             self.provider_cost = {}
             if not event.exc_info:
-                self.logger.info(SummaryLogger.GOLEM_SHUTDOWN_SUCCESSFUL_MESSAGE)
+                self.logger.info(
+                    SummaryLogger.GOLEM_SHUTDOWN_SUCCESSFUL_MESSAGE)
             else:
-                reason = str(event.exception) or repr(event.exception) or "unexpected error"
-                self.logger.error("Error when shutting down Golem engine: %s", reason)
+                reason = str(event.exception) or repr(
+                    event.exception) or "unexpected error"
+                self.logger.error(
+                    "Error when shutting down Golem engine: %s", reason)
             self.shutdown_complete = True
 
         elif isinstance(event, events.AgreementTerminated):
@@ -604,12 +635,14 @@ class SummaryLogger:
                 pass
             else:
                 prov_info = self.agreement_provider_info[event.agr_id]
-                self.logger.info(f"Terminated agreement with {prov_info.name}", job_id=event.job_id)
+                self.logger.info(
+                    f"Terminated agreement with {prov_info.name}", job_id=event.job_id)
 
         elif isinstance(event, events.ExecutionInterrupted):
             assert event.exc_info
             exc_type = event.exc_info[0]
-            self.logger.warning(f"Execution interrupted by {exc_type.__name__}")
+            self.logger.warning(
+                f"Execution interrupted by {exc_type.__name__}")
 
 
 def log_summary(wrapped_emitter: Optional[Callable[[events.Event], None]] = None):
