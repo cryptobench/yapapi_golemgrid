@@ -126,8 +126,8 @@ def enable_default_logger(
             if flag:
                 api_logger = logging.getLogger(logger_name)
                 api_logger.setLevel(logging.DEBUG)
-                api_logger.addHandler(
-                    logstash.LogstashHandler(host, 5960, version=1))
+                # api_logger.addHandler(
+                #     logstash.LogstashHandler(host, 5960, version=1))
 
 
 # Default human-readable representation of event types.
