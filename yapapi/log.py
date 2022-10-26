@@ -83,7 +83,7 @@ class _YagnaDatetimeFormatter(logging.Formatter):
         return dt.strftime(f"%Y-%m-%dT%H:%M:%S.{millis}%z")
 
 
-def logstash_logger(
+def enable_default_logger(
     format_: str = "[%(asctime)s %(levelname)s %(name)s] %(message)s",
     log_file: Optional[str] = None,
     debug_activity_api: bool = False,
