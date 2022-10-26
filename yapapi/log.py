@@ -57,7 +57,12 @@ if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
-import logstash
+import logging_loki
+from multiprocessing import Queue
+import logging.handlers
+from logging_loki import LokiHandler, emitter
+
+
 from yapapi import __version__ as yapapi_version
 from yapapi import events
 from yapapi.rest.activity import CommandExecutionError
@@ -95,12 +100,16 @@ def enable_default_logger(
     If `log_file` is specified, the logger with output messages with level `DEBUG` to
     the given file.
     """
-
-    host = 'logstash'
+    emitter.LokiEmitter.level_tag = "level"
+    loki_handler = logging_loki.LokiQueueHandler(
+        Queue(-1),
+        url="http://loki/loki/api/v1/push",
+        tags={"application": "yapapi"},
+        version="1",)
 
     logger = logging.getLogger('yapapi')
     logger.setLevel(logging.INFO)
-    logger.addHandler(logstash.LogstashHandler(host, 5959, version=1))
+    logger.addHandler(loki_handler)
     logger.disabled = False
 # test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
 
