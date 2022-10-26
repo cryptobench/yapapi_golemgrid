@@ -103,7 +103,7 @@ def enable_default_logger(
     emitter.LokiEmitter.level_tag = "level"
     loki_handler = logging_loki.LokiQueueHandler(
         Queue(-1),
-        url="http://loki/loki/api/v1/push",
+        url="http://loki:3100/loki/api/v1/push",
         tags={"application": "yapapi"},
         version="1",)
 
