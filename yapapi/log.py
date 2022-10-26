@@ -98,25 +98,18 @@ def enable_default_logger(
 
     host = 'logstash'
 
-    test_logger = logging.getLogger('python-logstash-logger')
-    test_logger.setLevel(logging.DEBUG)
-    test_logger.addHandler(logstash.LogstashHandler(host, 5959, version=1))
-    test_logger.disabled = False
-# test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
-
 # add extra field to logstash message
     formatter = _YagnaDatetimeFormatter(fmt=format_)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.INFO)
-    test_logger.addHandler(console_handler)
+    console_handler.addHandler(logstash.LogstashHandler(host, 5959, version=1))
 
     if log_file:
         file_handler = logging.FileHandler(
             filename=log_file, mode="w", encoding="utf-8")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
-        test_logger.addHandler(file_handler)
 
         for flag, logger_name in (
             (debug_activity_api, "ya_activity"),
@@ -128,7 +121,7 @@ def enable_default_logger(
                 api_logger = logging.getLogger(logger_name)
                 api_logger.setLevel(logging.DEBUG)
                 api_logger.addHandler(
-                    logstash.LogstashHandler(host, 5959, version=1))
+                    logstash.LogstashHandler(host, 5960, version=1))
 
 
 # Default human-readable representation of event types.
