@@ -104,21 +104,7 @@ def enable_default_logger(
     test_logger.disabled = False
 # test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
 
-    test_logger.error('python-logstash: test logstash error message.')
-    test_logger.info('python-logstash: test logstash info message.')
-    test_logger.warning('python-logstash: test logstash warning message.')
-
 # add extra field to logstash message
-    extra = {
-        'test_string': 'python version: ' + repr(sys.version_info),
-        'test_boolean': True,
-        'test_dict': {'a': 1, 'b': 'c'},
-        'test_float': 1.23,
-        'test_integer': 123,
-        'test_list': [1, 2, '3'],
-    }
-    test_logger.info('python-logstash: test extra fields', extra=extra)
-
     formatter = _YagnaDatetimeFormatter(fmt=format_)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
@@ -131,16 +117,6 @@ def enable_default_logger(
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         test_logger.addHandler(file_handler)
-
-        test_logger.debug(
-            "Yapapi version: %s, script: %s, working directory: %s",
-            yapapi_version,
-            sys.argv[0],
-            os.getcwd(),
-        )
-        test_logger.info(
-            "Using log file `%s`; in case of errors look for additional information there", log_file
-        )
 
         for flag, logger_name in (
             (debug_activity_api, "ya_activity"),
