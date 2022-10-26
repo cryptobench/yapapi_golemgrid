@@ -99,7 +99,7 @@ def enable_default_logger(
     host = 'logstash'
 
     logger = logging.getLogger('yapapi')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     logger.addHandler(logstash.LogstashHandler(host, 5959, version=1))
     logger.disabled = False
 # test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
@@ -116,7 +116,6 @@ def enable_default_logger(
             filename=log_file, mode="w", encoding="utf-8")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
 
         for flag, logger_name in (
             (debug_activity_api, "ya_activity"),
