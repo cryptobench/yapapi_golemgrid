@@ -245,6 +245,9 @@ class LocalHttpProxy:
         instances = [
             i for i in self._cluster.instances if i.state == ServiceState.running]
 
+        print("INSTANCES")
+        print(instances)
+
         if not instances:
             logger.error(
                 "No running instances of %s available to handle the request", self._cluster
