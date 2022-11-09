@@ -1,7 +1,6 @@
 import os
 from typing import Optional
 from typing_extensions import Final
-
 import ya_activity  # type: ignore
 import ya_market  # type: ignore
 import ya_net  # type: ignore
