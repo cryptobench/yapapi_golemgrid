@@ -100,20 +100,10 @@ def enable_default_logger(
     If `log_file` is specified, the logger with output messages with level `DEBUG` to
     the given file.
     """
-    emitter.LokiEmitter.level_tag = "level"
-    loki_handler = logging_loki.LokiQueueHandler(
-        Queue(-1),
-        url="http://loki:3100/loki/api/v1/push",
-        tags={"application": "yapapi"},
-        version="1",)
-
-    logger = logging.getLogger('yapapi')
-    logger.setLevel(logging.INFO)
-    logger.addHandler(loki_handler)
+    logger = logging.getLogger("yapapi")
+    logger.setLevel(logging.DEBUG)
     logger.disabled = False
-# test_logger.addHandler(logstash.TCPLogstashHandler(host, 5959, version=1))
 
-# add extra field to logstash message
     formatter = _YagnaDatetimeFormatter(fmt=format_)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
@@ -125,6 +115,17 @@ def enable_default_logger(
             filename=log_file, mode="w", encoding="utf-8")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
+        logger.debug(
+            "Yapapi version: %s, script: %s, working directory: %s",
+            yapapi_version,
+            sys.argv[0],
+            os.getcwd(),
+        )
+        logger.info(
+            "Using log file `%s`; in case of errors look for additional information there", log_file
+        )
 
         for flag, logger_name in (
             (debug_activity_api, "ya_activity"),
@@ -135,8 +136,7 @@ def enable_default_logger(
             if flag:
                 api_logger = logging.getLogger(logger_name)
                 api_logger.setLevel(logging.DEBUG)
-                # api_logger.addHandler(
-                #     logstash.LogstashHandler(host, 5960, version=1))
+                api_logger.addHandler(file_handler)
 
 
 # Default human-readable representation of event types.
