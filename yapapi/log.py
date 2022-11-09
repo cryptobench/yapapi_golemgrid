@@ -57,11 +57,6 @@ if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
-import logging_loki
-from multiprocessing import Queue
-import logging.handlers
-from logging_loki import LokiHandler, emitter
-
 
 from yapapi import __version__ as yapapi_version
 from yapapi import events
@@ -97,6 +92,7 @@ def enable_default_logger(
     debug_net_api: bool = False,
 ):
     """Enable the default logger that logs messages to stderr with level `INFO`.
+
     If `log_file` is specified, the logger with output messages with level `DEBUG` to
     the given file.
     """
