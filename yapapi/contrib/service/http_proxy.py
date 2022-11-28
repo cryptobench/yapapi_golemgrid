@@ -146,40 +146,43 @@ class HttpProxyService(Service, abc.ABC):
         logger.debug("remote_request: %s", remote_request)
 
         ws_session = aiohttp.ClientSession()
-        async with ws_session.ws_connect(
+        try:
+            async with ws_session.ws_connect(
             instance_ws,
             headers={"Authorization": f"Bearer {app_key}"},
-        ) as ws:
-            for chunk in chunks(memoryview(remote_request), WEBSOCKET_CHUNK_LIMIT):
-                await ws.send_bytes(chunk)
+            ) as ws:
+                for chunk in chunks(memoryview(remote_request), WEBSOCKET_CHUNK_LIMIT):
+                    await ws.send_bytes(chunk)
 
-            response_parser = _ResponseParser(
-                ws, self._remote_response_timeout)
-            try:
-                response = await response_parser.get_response()
-                logger.info("Remote response received. status=%s",
+                response_parser = _ResponseParser(
+                    ws, self._remote_response_timeout)
+                try:
+                    response = await response_parser.get_response()
+                    logger.info("Remote response received. status=%s",
                             response.status)
-                logger.debug(
-                    "Remote response: status=%s, headers=%s, body=%s",
-                    response.status,
-                    response.headers,
-                    response.body,
-                )
-            except Exception as e:
-                logger.error(
-                    "Error receiving remote response. url=%s, service=%s, exception=%s(%s) [%s])",
-                    request.path_qs,
-                    self,
-                    type(e),
-                    str(e),
-                    traceback.format_exc(),
-                )
-                response = web.Response(
-                    status=500, text="Error retrieving the remote response.")
+                    logger.debug(
+                        "Remote response: status=%s, headers=%s, body=%s",
+                        response.status,
+                        response.headers,
+                        response.body,
+                    )
+                except Exception as e:
+                    logger.error(
+                        "Error receiving remote response. url=%s, service=%s, exception=%s(%s) [%s])",
+                        request.path_qs,
+                        self,
+                        type(e),
+                        str(e),
+                        traceback.format_exc(),
+                    )
+                    response = web.Response(
+                        status=500, text="Error retrieving the remote response.")
 
-        await ws_session.close()
+            await ws_session.close()
 
-        return response
+            return response
+        except:
+            quit()
 
 
 class LocalHttpProxy:
