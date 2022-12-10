@@ -30,8 +30,8 @@ from yapapi.props.inf import (
     InfBase,
 )
 
-_DEFAULT_REPO_SRV: Final[str] = "_girepo._tcp.dev.golem.network"
-_FALLBACK_REPO_URL: Final[str] = "http://girepo.dev.golem.network:8000"
+_DEFAULT_REPO_SRV: Final[str] = "_registry._tcp.dev.golem.network"
+_FALLBACK_REPO_URL: Final[str] = "http://girepo.new.golem.network:8000"
 _DEFAULT_TIMEOUT_SECONDS: Final[int] = 10
 
 logger = logging.getLogger(__name__)
