@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
+import logging
 import statemachine  # type: ignore
 from types import TracebackType
 from typing import (
@@ -17,6 +18,8 @@ from typing import (
 )
 import uuid
 
+from ya_activity.exceptions import ApiException
+
 from yapapi import events
 from yapapi.ctx import WorkContext
 from yapapi.network import Network, Node
@@ -28,6 +31,9 @@ from .service_state import ServiceState
 if TYPE_CHECKING:
     from .cluster import Cluster
     from .service_runner import ControlSignal
+
+
+logger = logging.getLogger(__name__)
 
 # Return type for `sys.exc_info()`
 ExcInfo = Union[
@@ -125,6 +131,9 @@ class Service:
 
     def _set_network_node(self, node: Node) -> None:
         self._network_node = node
+
+    def _clear_network_node(self) -> None:
+        self._network_node = None
 
     def __repr__(self):
         class_name = type(self).__name__
@@ -394,6 +403,24 @@ class Service:
     @property
     def service_instance(self):
         return self.__service_instance
+
+    async def is_activity_responsive(self) -> bool:
+        """Verify if the provider's activity is responsive.
+
+        Tries to get the state activity. Returns True if the activity state could be
+        queried successfully and false otherwise.
+
+        Can be overridden in case the specific implementation of `Service` wants to implement
+        a more appropriate health check of the particular service.
+        """
+        if not self._ctx:
+            return False
+
+        try:
+            return bool(await self._ctx.get_raw_state())
+        except ApiException as e:
+            logger.error("Couldn't retrieve the activity state (%s)", e)
+            return False
 
 
 ServiceType = TypeVar("ServiceType", bound=Service)

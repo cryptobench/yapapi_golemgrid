@@ -9,8 +9,8 @@
 
 ## What's Golem and yapapi?
 
-**[Golem](https://golem.network)** is a global, open-source, decentralized supercomputer that anyone can access.
-It connects individual machines to form a vast network which combines their resources and allows requestors to utilize its unique potential - which may be its combined computing power, storage, the geographical distribution or its censorship resistance.
+**[The Golem Network](https://golem.network)** fosters a global group of creators building ambitious software solutions that will shape the technological landscape of future generations by accessing computing resources across the platform. Golem Network is an accessible, reliable, open access and censorship-resistant protocol, democratizing access to digital resources and connecting users through a flexible, open-source platform.
+
 
 **Yapapi** is the Python high-level API that allows developers to connect to their Golem nodes and manage their distributed, computational loads through Golem Network.
 
@@ -139,7 +139,7 @@ It's possible to set various elements of `yagna` configuration through environme
 - `YAGNA_PAYMENT_NETWORK`, Ethereum network name for `yagna` to use, e.g. `rinkeby`
 - `YAGNA_PAYMENT_DRIVER`, payment driver name for `yagna` to use, e.g. `erc20`
 - `YAGNA_PAYMENT_URL`, URL to `yagna` payment API, e.g. `http://localhost:7500/payment-api/v1`
-- `YAGNA_SUBNET`, name of the `yagna` sub network to be used, e.g. `devnet-beta`
+- `YAGNA_SUBNET`, name of the `yagna` sub network to be used, e.g. `public`
 - `YAPAPI_USE_GFTP_CLOSE`, if set to a _truthy_ value (e.g. "1", "Y", "True", "on") then `yapapi`
   will ask `gftp` to close files when there's no need to publish them any longer. This may greatly
   reduce the number of files kept open while `yapapi` is running but requires `yagna`
