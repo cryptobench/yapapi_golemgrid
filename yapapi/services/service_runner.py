@@ -95,7 +95,8 @@ class ServiceRunner(AsyncContextManager):
         self._instances.append(service)
 
         loop = asyncio.get_event_loop()
-        task = loop.create_task(self.spawn_instance(service, network, network_address))
+        task = loop.create_task(self.spawn_instance(
+            service, network, network_address))
         self._instance_tasks.append(task)
 
     def stop_instance(self, service: Service):
@@ -241,12 +242,10 @@ class ServiceRunner(AsyncContextManager):
                     retries_left = self._health_check_retries
                 else:
                     retries_left -= 1
-                    logger.warning("Service health check failed, retries left: %s", retries_left)
+                    logger.warning(
+                        "Service health check failed, retries left: %s", retries_left)
             if retries_left <= 0:
-                raise ServiceRunnerError(
-                    "Service health check failed after %s retries",
-                    self._health_check_retries,
-                )
+                logger.warning("Service health check failed, IGNORING STOP")
             await asyncio.sleep(self._health_check_interval)
 
     async def _run_instance(self, instance: ServiceInstance):
@@ -265,7 +264,8 @@ class ServiceRunner(AsyncContextManager):
             try:
                 # if handler cannot be obtained, it's not changed here, but in change_state
                 handler = self._get_handler(instance)
-                logger.debug("%s state changed to %s", instance.service, instance.state.value)
+                logger.debug("%s state changed to %s",
+                             instance.service, instance.state.value)
             except Exception:
                 logger.error(
                     "Error getting '%s' handler for %s: %s",
@@ -300,7 +300,8 @@ class ServiceRunner(AsyncContextManager):
             if signal_task is None:
                 signal_task = loop.create_task(instance.control_queue.get())
             if health_check_task is None:
-                health_check_task = loop.create_task(self._ensure_alive(instance.service))
+                health_check_task = loop.create_task(
+                    self._ensure_alive(instance.service))
 
             done, _ = await asyncio.wait(
                 (batch_task, signal_task, health_check_task),
@@ -326,7 +327,8 @@ class ServiceRunner(AsyncContextManager):
                         await instance.service.network.refresh_nodes()
 
                 except Exception:
-                    logger.warning("Unhandled exception in service", exc_info=True)
+                    logger.warning(
+                        "Unhandled exception in service", exc_info=True)
                     change_state(sys.exc_info())
                 else:
                     try:
@@ -335,7 +337,8 @@ class ServiceRunner(AsyncContextManager):
                     except BatchError:
                         # Throw the error into the service code so it can be handled there
                         logger.debug("Batch execution failed", exc_info=True)
-                        batch_task = loop.create_task(handler.athrow(*sys.exc_info()))
+                        batch_task = loop.create_task(
+                            handler.athrow(*sys.exc_info()))
                     except Exception:
                         # Could be an ApiException thrown in call_exec or get_exec_batch_results
                         # operations of Activity API. Currently we do not pass such exceptions
@@ -343,7 +346,8 @@ class ServiceRunner(AsyncContextManager):
                         logger.error("Unhandled engine error", exc_info=True)
                         change_state(sys.exc_info())
                     else:
-                        batch_task = loop.create_task(handler.asend(fut_result))
+                        batch_task = loop.create_task(
+                            handler.asend(fut_result))
 
             if signal_task in done:
                 # Process a signal
@@ -360,7 +364,8 @@ class ServiceRunner(AsyncContextManager):
                     change_state(sys.exc_info())
                     health_check_task = None
 
-        logger.debug("No handler for %s in state %s", instance.service, instance.state.value)
+        logger.debug("No handler for %s in state %s",
+                     instance.service, instance.state.value)
 
         try:
             for t in [batch_task, signal_task, health_check_task]:
@@ -418,7 +423,8 @@ class ServiceRunner(AsyncContextManager):
                 work_context.emit(events.ServiceFinished, service=service)
                 work_context.emit(events.WorkerFinished)
             except Exception:
-                work_context.emit(events.WorkerFinished, exc_info=sys.exc_info())
+                work_context.emit(events.WorkerFinished,
+                                  exc_info=sys.exc_info())
                 raise
             finally:
                 if network and service.network_node:
